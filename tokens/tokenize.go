@@ -2,6 +2,7 @@ package tokens
 
 import (
 	//"fmt"
+	"encoding/base64"
 	"regexp"
 	"strings"
 
@@ -10,8 +11,39 @@ import (
 	"github.com/blevesearch/bleve/analysis/tokenizers/regexp_tokenizer"
 )
 
-type gram struct {
+const (
+	tokenSeparator = "_"
+)
+
+type NGram struct {
 	Tokens [][]byte
+}
+
+// encodes in base64 for safe comparison
+func (ng *NGram) String() string {
+	encoded := make([]string, len(ng.Tokens))
+
+	for i, token := range ng.Tokens {
+		encoded[i] = base64.StdEncoding.EncodeToString(token)
+	}
+
+	return strings.Join(encoded, tokenSeparator)
+}
+
+func DecodeNGram(s string) (*NGram, error) {
+	encodedTokens := strings.Split(s, tokenSeparator)
+
+	tokens := make([][]byte, len(encodedTokens))
+
+	var err error
+	for i, encodedToken := range encodedTokens {
+		tokens[i], err = base64.StdEncoding.DecodeString(encodedToken)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &NGram{tokens}, nil
 }
 
 type TokenizerConf struct {
@@ -39,7 +71,7 @@ func NewTokenizer(tc *TokenizerConf) (*Tokenizer, error) {
 }
 
 // Tokenize and Gramify
-func (t *Tokenizer) Parse(doc string) []gram {
+func (t *Tokenizer) Parse(doc string) []NGram {
 	// maybe use token types for datetimes or something instead of
 	// the actual byte slice
 	tokenized := tokensToBytes(t.Tokenize([]byte(strings.ToLower(doc))))
@@ -52,12 +84,12 @@ func (t *Tokenizer) Parse(doc string) []gram {
 	}
 
 	// wowzers
-	ngrams := make([]gram, 0, nNGrams)
+	ngrams := make([]NGram, 0, nNGrams)
 	for ngramSize := int64(1); ngramSize <= t.Conf.NGramSize; ngramSize++ {
 		nNGramsOfSize := choose(nTokens, ngramSize)
 
 		for i := int64(0); i < nNGramsOfSize; i++ {
-			ngrams = append(ngrams, gram{tokenized[i:(i + ngramSize)]})
+			ngrams = append(ngrams, NGram{tokenized[i:(i + ngramSize)]})
 		}
 	}
 

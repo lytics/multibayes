@@ -20,6 +20,11 @@ func TestTokenizer(t *testing.T) {
 	assert.Equalf(t, nil, err, "Error creating tokenizer: %v", err)
 
 	for _, doc := range docs {
-		fmt.Println(tokenizer.Parse(doc))
+		grams := tokenizer.Parse(doc)
+		for _, gram := range grams {
+			fmt.Println(gram.String())
+		}
 	}
+
+	// test token length here later
 }
