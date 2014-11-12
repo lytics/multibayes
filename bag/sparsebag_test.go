@@ -12,7 +12,7 @@ import (
 func TestSparseBag(t *testing.T) {
 	testdata := testutil.GetTestData()
 	tokenizer, err := tokens.NewTokenizer(&tokens.TokenizerConf{
-		NGramSize: 2,
+		NGramSize: 1,
 	})
 	assert.Equalf(t, err, nil, "Error creating new tokenizer")
 
@@ -23,7 +23,6 @@ func TestSparseBag(t *testing.T) {
 
 		sparse.Add(ngrams, testdata.Classes[i])
 	}
-	//fmt.Println(sparse)
 }
 
 func TestToFeatureMatrix(t *testing.T) {
@@ -43,6 +42,6 @@ func TestToFeatureMatrix(t *testing.T) {
 
 	matrices := sparse.ToFeatureMatrix()
 
-	assert.Equal(t, len(sparse.ClassMap), len(matrices["classes"].Data), "Wrong length")
-	assert.Equal(t, len(sparse.TokenMap), len(matrices["tokens"].Data), "Wrong length")
+	assert.Equal(t, len(sparse.Classes), len(matrices["classes"].Data), "Wrong length")
+	assert.Equal(t, len(sparse.Tokens), len(matrices["tokens"].Data), "Wrong length")
 }
