@@ -23,7 +23,6 @@ func TestSparseBag(t *testing.T) {
 
 		sparse.Add(ngrams, testdata.Classes[i])
 	}
-	fmt.Printf("\n%+v\n", sparse.Tokens["off"])
 }
 
 func NotTestToFeatureMatrix(t *testing.T) {

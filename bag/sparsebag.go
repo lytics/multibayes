@@ -31,6 +31,11 @@ func (s *SparseColumn) Add(index int) {
 	s.N++
 }
 
+// return the number of rows that contain the column
+func (s *SparseColumn) Count() int {
+	return len(s.Data)
+}
+
 // sparse to dense
 func (s *SparseColumn) Expand() []float64 {
 	expanded := make([]float64, s.N)
