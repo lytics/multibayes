@@ -1,7 +1,7 @@
 package bag
 
 import (
-	//"fmt"
+	"fmt"
 	"github.com/drewlanenga/multibayes/tokens"
 	"github.com/ryanbressler/CloudForest"
 )
@@ -37,18 +37,18 @@ func (s *SparseColumn) Count() int {
 }
 
 // sparse to dense
-func (s *SparseColumn) Expand() []float64 {
-	expanded := make([]float64, s.N)
+func (s *SparseColumn) Expand(n int) []float64 {
+	expanded := make([]float64, n)
 	for _, index := range s.Data {
 		expanded[index] = 1.0
 	}
 	return expanded
 }
 
-func (s *SparseColumn) ToFeature() CloudForest.Feature {
+func (s *SparseColumn) ToFeature(n int) CloudForest.Feature {
 	return &CloudForest.DenseNumFeature{
-		NumData:    s.Expand(),
-		Missing:    make([]bool, s.N), // do we need this if HasMissing is false?
+		NumData:    s.Expand(n),
+		Missing:    make([]bool, n), // do we need this if HasMissing is false?
 		Name:       s.Name,
 		HasMissing: false,
 	}
@@ -87,19 +87,19 @@ func (s *SparseMatrix) Add(ngrams []tokens.NGram, classes []string) {
 func (s *SparseMatrix) ToFeatureMatrix() map[string]*CloudForest.FeatureMatrix {
 	featureMatrices := make(map[string]*CloudForest.FeatureMatrix)
 
-	featureMatrices["tokens"] = toFeatureMatrix(s.Tokens)
-	featureMatrices["classes"] = toFeatureMatrix(s.Classes)
+	featureMatrices["tokens"] = toFeatureMatrix(s.Tokens, s.N)
+	featureMatrices["classes"] = toFeatureMatrix(s.Classes, s.N)
 
 	return featureMatrices
 }
 
-func toFeatureMatrix(matrixMap map[string]*SparseColumn) *CloudForest.FeatureMatrix {
+func toFeatureMatrix(matrixMap map[string]*SparseColumn, nrow int) *CloudForest.FeatureMatrix {
 	features := make([]CloudForest.Feature, 0, len(matrixMap))
 	featureMap := make(map[string]int)
 
 	i := 0
 	for token, column := range matrixMap {
-		features = append(features, column.ToFeature())
+		features = append(features, column.ToFeature(nrow))
 		featureMap[token] = i
 		i++
 	}

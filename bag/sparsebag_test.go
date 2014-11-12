@@ -1,7 +1,7 @@
 package bag
 
 import (
-	"fmt"
+	//"fmt"
 	"testing"
 
 	"github.com/bmizerany/assert"
@@ -25,7 +25,7 @@ func TestSparseBag(t *testing.T) {
 	}
 }
 
-func NotTestToFeatureMatrix(t *testing.T) {
+func TestToFeatureMatrix(t *testing.T) {
 	testdata := testutil.GetTestData()
 	tokenizer, err := tokens.NewTokenizer(&tokens.TokenizerConf{
 		NGramSize: 1,
