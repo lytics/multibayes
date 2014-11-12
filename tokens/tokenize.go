@@ -1,14 +1,17 @@
 package tokens
 
 import (
-	//"fmt"
 	"encoding/base64"
+	//"fmt"
 	"regexp"
 	"strings"
 
-	//"github.com/blevesearch/bleve/analysis/token_filters/stop_tokens_filter"
 	"github.com/blevesearch/bleve/analysis"
+	//"github.com/blevesearch/bleve/analysis/token_filters/stop_tokens_filter"
 	"github.com/blevesearch/bleve/analysis/tokenizers/regexp_tokenizer"
+	"github.com/blevesearch/go-porterstemmer"
+	//"github.com/lytics/lio/src/catalog/prob"
+	//"github.com/lytics/lio/src/catalog/prob/data"
 )
 
 const (
@@ -43,7 +46,6 @@ func DecodeNGram(s string) (*NGram, error) {
 			return nil, err
 		}
 	}
-
 	return &NGram{tokens}, nil
 }
 
@@ -55,6 +57,9 @@ type TokenizerConf struct {
 type Tokenizer struct {
 	regexp_tokenizer.RegexpTokenizer
 	Conf *TokenizerConf
+}
+
+type StopFilter struct {
 }
 
 func validateConf(tc *TokenizerConf) {
@@ -75,7 +80,23 @@ func NewTokenizer(tc *TokenizerConf) (*Tokenizer, error) {
 func (t *Tokenizer) Parse(doc string) []NGram {
 	// maybe use token types for datetimes or something instead of
 	// the actual byte slice
-	tokenized := tokensToBytes(t.Tokenize([]byte(strings.ToLower(doc))))
+	//dictionary := data.WordDicts.Noun
+
+	//stem := porterstemmer.StemString(strings.ToLower(doc))
+	//exists := dictionary.Test([]byte(stem))
+
+	tokenized := tokensToStemmedBytes(t.Tokenize([]byte(strings.ToLower(doc))))
+	//stemtokenized := tokensToStemmedBytes(t.Tokenize([]byte(strings.ToLower(doc))))
+	//stemtokenizedstr := tokensToStemmedStrings(t.Tokenize([]byte(strings.ToLower(doc))))
+
+	//fmt.Println(tokenized)
+	//fmt.Println(stemtokenized)
+	//fmt.Println(stemtokenizedstr)
+	//for _, token := range tokenized {
+	//	exists := dictionary.Test(token)
+	//	fmt.Printf("Token: %v \t Noun?: %v\n", token, exists)
+	//}
+
 	nTokens := int64(len(tokenized))
 
 	nNGrams := int64(0)
@@ -101,9 +122,27 @@ func tokensToBytes(ts analysis.TokenStream) [][]byte {
 	bytes := make([][]byte, len(ts))
 	for i, token := range ts {
 		bytes[i] = token.Term
+
 	}
 	return bytes
 }
+
+func tokensToStemmedBytes(ts analysis.TokenStream) [][]byte {
+	bytes := make([][]byte, len(ts))
+	for i, token := range ts {
+		stem := porterstemmer.StemString(string(token.Term))
+		bytes[i] = []byte(stem)
+	}
+	return bytes
+}
+
+//func tokensToStemmedStrings(ts analysis.TokenStream) []string {
+//	strs := make([]string, len(ts))
+//	for i, token := range ts {
+//		strs[i] = porterstemmer.StemString(string(token.Term))
+//	}
+//	return strs
+//}
 
 // not a binomial coefficient -- combinations must be sequential
 func choose(n, k int64) int64 {
