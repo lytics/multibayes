@@ -24,7 +24,8 @@ func (ng *NGram) String() string {
 	encoded := make([]string, len(ng.Tokens))
 
 	for i, token := range ng.Tokens {
-		encoded[i] = base64.StdEncoding.EncodeToString(token)
+		encoded[i] = string(token)
+		//encoded[i] = base64.StdEncoding.EncodeToString(token)
 	}
 
 	return strings.Join(encoded, tokenSeparator)
