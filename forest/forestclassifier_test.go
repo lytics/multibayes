@@ -20,8 +20,10 @@ func TestLearn(t *testing.T) {
 	for i, _ := range testdata.Docs {
 		docs[i] = tokenizer.Parse(testdata.Docs[i])
 	}
-	//forestBag := Learn(docs, testdata.Classes)
+	//_, featureMatrices := Learn(docs, testdata.Classes)
 	//fmt.Println(forestBag)
+	//fmt.Println(featureMatrices["tokens"])
+	//fmt.Println(featureMatrices["classes"])
 }
 
 func TestPredict(t *testing.T) {

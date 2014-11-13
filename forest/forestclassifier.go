@@ -22,10 +22,9 @@ func Learn(ngrams [][]tokens.NGram, classes [][]string) (ForestBag, map[string]*
 	}
 
 	matrices := sparseMatrix.ToFeatureMatrix()
-
 	// forest bag has a forest for each document class
 	forestBag := make(ForestBag)
-	for class, classindex := range sparseMatrix.ClassMap {
+	for class, _ := range sparseMatrix.Classes {
 		forestBag[class] = &mondrian.MondrianForest{
 			Target: "C:" + class,
 			Trees:  make(map[int64]*CloudForest.Tree),
@@ -42,7 +41,7 @@ func Learn(ngrams [][]tokens.NGram, classes [][]string) (ForestBag, map[string]*
 		for i, feature := range matrices["tokens"].Data {
 			newFeatures[i] = feature
 		}
-		newFeatures[len(matrices["tokens"].Data)] = matrices["classes"].Data[classindex]
+		newFeatures[len(matrices["tokens"].Data)] = sparseMatrix.Classes[class].ToFeature(sparseMatrix.N)
 
 		featureMatrix := &CloudForest.FeatureMatrix{
 			Data:       newFeatures,
@@ -54,7 +53,7 @@ func Learn(ngrams [][]tokens.NGram, classes [][]string) (ForestBag, map[string]*
 		if err != nil {
 			fmt.Println(err)
 		}
-		mondrian.WriteForest(forestBag[class])
+		//mondrian.WriteForest(forestBag[class])
 
 	}
 	return forestBag, matrices
@@ -65,7 +64,7 @@ func (f ForestBag) Predict(tokenMatrix *CloudForest.FeatureMatrix, ngrams []toke
 
 	for _, ngram := range ngrams {
 		gramString := ngram.String()
-		gramString = "N:" + gramString
+		//gramString = "N:" + gramString
 
 		if tokenIndex, ok := tokenMatrix.Map[gramString]; ok {
 			newTokens[tokenIndex]++
@@ -74,16 +73,42 @@ func (f ForestBag) Predict(tokenMatrix *CloudForest.FeatureMatrix, ngrams []toke
 
 	newTokenMap := make(map[string]int)
 	for token, tokenindex := range tokenMatrix.Map {
+		fmt.Println(token)
 		trimmed := strings.Trim(token, "N:")
 		newTokenMap[trimmed] = tokenindex
 	}
 
-	newFeatures := bag.ToFeatures(newTokenMap, []map[int]int{newTokens}, "N:")
+	// create a single row feature matrix with
+	// all the columns of the original feature matrix
+	Tokens := []map[int]int{newTokens}
+	newFeatures := make([]CloudForest.Feature, len(newTokenMap))
+	tokenCount := make([]float64, len(Tokens))
+	for tokenname, tokenindex := range newTokenMap {
+		for rowindex, columnmap := range Tokens {
+			if _, ok := columnmap[tokenindex]; !ok {
+				tokenCount[rowindex] = 0
+			} else {
+				tokenCount[rowindex] = float64(columnmap[tokenindex])
+			}
+		}
+		f := &CloudForest.DenseNumFeature{
+			NumData: tokenCount,
+			Missing: make([]bool, len(Tokens)),
+			//Name:       "N:" + tokenname,
+			Name:       tokenname,
+			HasMissing: false,
+		}
+		newFeatures[tokenindex] = f
+	}
+	///
+
 	featureMatrix := &CloudForest.FeatureMatrix{
 		Data:       newFeatures,
 		Map:        tokenMatrix.Map,
 		CaseLabels: make([]string, 0),
 	}
+	fmt.Println(featureMatrix.Data[0])
+	fmt.Println(tokenMatrix.Data[0])
 
 	predictions := make(map[string]float64)
 	for class, forest := range f {
