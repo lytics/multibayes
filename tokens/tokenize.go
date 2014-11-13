@@ -2,7 +2,7 @@ package tokens
 
 import (
 	"encoding/base64"
-	//"fmt"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -16,6 +16,10 @@ import (
 
 const (
 	tokenSeparator = "_"
+)
+
+var (
+	stop_words = []string{`i`, `me`, `my`, `myself`, `we`, `our`, `ours`, `ourselves`, `you`, `your`, `yours`, `yourself`, `yourselves`, `he`, `him`, `his`, `himself`, `she`, `her`, `hers`, `herself`, `it`, `its`, `itself`, `they`, `them`, `their`, `theirs`, `themselves`, `what`, `which`, `who`, `whom`, `this`, `that`, `these`, `those`, `am`, `is`, `are`, `was`, `were`, `be`, `been`, `being`, `have`, `has`, `had`, `having`, `do`, `does`, `did`, `doing`, `would`, `should`, `could`, `ought`, `i'm`, `you're`, `he's`, `she's`, `it's`, `we're`, `they're`, `i've`, `you've`, `we've`, `they've`, `i'd`, `you'd`, `he'd`, `she'd`, `we'd`, `they'd`, `i'll`, `you'll`, `he'll`, `she'll`, `we'll`, `they'll`, `isn't`, `aren't`, `wasn't`, `weren't`, `hasn't`, `haven't`, `hadn't`, `doesn't`, `don't`, `didn't`, `won't`, `wouldn't`, `shan't`, `shouldn't`, `can't`, `cannot`, `couldn't`, `mustn't`, `let's`, `that's`, `who's`, `what's`, `here's`, `there's`, `when's`, `where's`, `why's`, `how's`, `a`, `an`, `the`, `and`, `but`, `if`, `or`, `because`, `as`, `until`, `while`, `of`, `at`, `by`, `for`, `with`, `about`, `against`, `between`, `into`, `through`, `during`, `before`, `after`, `above`, `below`, `to`, `from`, `up`, `down`, `in`, `out`, `on`, `off`, `over`, `under`, `again`, `further`, `then`, `once`, `here`, `there`, `when`, `where`, `why`, `how`, `all`, `any`, `both`, `each`, `few`, `more`, `most`, `other`, `some`, `such`, `no`, `nor`, `not`, `only`, `own`, `same`, `so`, `than`, `too`, `very`}
 )
 
 type NGram struct {
@@ -63,7 +67,7 @@ type StopFilter struct {
 }
 
 func validateConf(tc *TokenizerConf) {
-	tc.regexp = regexp.MustCompile(`\w+|\%|\$|\!`)
+	tc.regexp = regexp.MustCompile(`\w+|\%|\$`)
 
 	if tc.NGramSize == 0 {
 		tc.NGramSize = 2
@@ -80,22 +84,31 @@ func NewTokenizer(tc *TokenizerConf) (*Tokenizer, error) {
 func (t *Tokenizer) Parse(doc string) []NGram {
 	// maybe use token types for datetimes or something instead of
 	// the actual byte slice
-	//dictionary := data.WordDicts.Noun
+	tokenizedstr := tokensToStrings(t.Tokenize([]byte(strings.ToLower(doc))))
+	var filtered []string
+	var exists bool
+	for _, token := range tokenizedstr {
+		for _, stop := range stop_words {
+			if token == stop {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			filtered = append(filtered, token)
+		}
+		exists = false
+	}
+	//fmt.Println(tokenizedstr)
+	//fmt.Println(filtered)
 
-	//stem := porterstemmer.StemString(strings.ToLower(doc))
-	//exists := dictionary.Test([]byte(stem))
-
-	tokenized := tokensToStemmedBytes(t.Tokenize([]byte(strings.ToLower(doc))))
-	//stemtokenized := tokensToStemmedBytes(t.Tokenize([]byte(strings.ToLower(doc))))
-	//stemtokenizedstr := tokensToStemmedStrings(t.Tokenize([]byte(strings.ToLower(doc))))
-
-	//fmt.Println(tokenized)
-	//fmt.Println(stemtokenized)
-	//fmt.Println(stemtokenizedstr)
-	//for _, token := range tokenized {
-	//	exists := dictionary.Test(token)
-	//	fmt.Printf("Token: %v \t Noun?: %v\n", token, exists)
-	//}
+	tokenized := make([][]byte, len(filtered))
+	for i, token := range filtered {
+		stem := porterstemmer.StemString(token)
+		tokenizedstr[i] = stem
+		tokenized[i] = []byte(stem)
+	}
+	fmt.Println(tokenizedstr)
 
 	nTokens := int64(len(tokenized))
 
@@ -127,6 +140,14 @@ func tokensToBytes(ts analysis.TokenStream) [][]byte {
 	return bytes
 }
 
+func tokensToStrings(ts analysis.TokenStream) []string {
+	strs := make([]string, len(ts))
+	for i, token := range ts {
+		strs[i] = string(token.Term)
+	}
+	return strs
+}
+
 func tokensToStemmedBytes(ts analysis.TokenStream) [][]byte {
 	bytes := make([][]byte, len(ts))
 	for i, token := range ts {
@@ -136,13 +157,13 @@ func tokensToStemmedBytes(ts analysis.TokenStream) [][]byte {
 	return bytes
 }
 
-//func tokensToStemmedStrings(ts analysis.TokenStream) []string {
-//	strs := make([]string, len(ts))
-//	for i, token := range ts {
-//		strs[i] = porterstemmer.StemString(string(token.Term))
-//	}
-//	return strs
-//}
+func tokensToStemmedStrings(ts analysis.TokenStream) []string {
+	strs := make([]string, len(ts))
+	for i, token := range ts {
+		strs[i] = porterstemmer.StemString(string(token.Term))
+	}
+	return strs
+}
 
 // not a binomial coefficient -- combinations must be sequential
 func choose(n, k int64) int64 {
