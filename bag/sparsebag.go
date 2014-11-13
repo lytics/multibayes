@@ -1,7 +1,6 @@
 package bag
 
 import (
-	"fmt"
 	"github.com/drewlanenga/multibayes/tokens"
 	"github.com/ryanbressler/CloudForest"
 )
@@ -63,23 +62,27 @@ func NewSparseMatrix() *SparseMatrix {
 }
 
 func (s *SparseMatrix) Add(ngrams []tokens.NGram, classes []string) {
+	if len(ngrams) == 0 || len(classes) == 0 {
+		return
+	}
 	for _, class := range classes {
-		if _, ok := s.Classes[class]; !ok {
-			s.Classes[class] = NewSparseColumn(class)
+		cclass := "C:" + class
+		if _, ok := s.Classes[cclass]; !ok {
+			s.Classes[cclass] = NewSparseColumn(cclass)
 		}
 
-		s.Classes[class].Add(s.N)
+		s.Classes[cclass].Add(s.N)
 	}
 
 	for _, ngram := range ngrams {
 		gramString := ngram.String()
-		if _, ok := s.Tokens[gramString]; !ok {
-			s.Tokens[gramString] = NewSparseColumn(gramString)
+		ngramString := "N:" + gramString
+		if _, ok := s.Tokens[ngramString]; !ok {
+			s.Tokens[ngramString] = NewSparseColumn(ngramString)
 		}
 
-		s.Tokens[gramString].Add(s.N)
+		s.Tokens[ngramString].Add(s.N)
 	}
-
 	// increment the row counter
 	s.N++
 }
