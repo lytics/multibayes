@@ -40,11 +40,12 @@ func TestPredict(t *testing.T) {
 	forestBag, matrices := Learn(docs, testdata.Classes)
 
 	for i, _ := range testdata.Docs {
-		if i > 0 {
-			break
-		}
-		fmt.Printf("Subject line: %v\n", testdata.Docs[i])
+		//if i > 0 {
+		//	break
+		//}
+		fmt.Printf("Subject line: \t %v\n", testdata.Docs[i])
 		predictions := forestBag.Predict(matrices["tokens"], docs[i])
 		fmt.Println(predictions)
+		fmt.Println()
 	}
 }

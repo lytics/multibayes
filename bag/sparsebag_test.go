@@ -1,7 +1,6 @@
 package bag
 
 import (
-	//"fmt"
 	"testing"
 
 	"github.com/bmizerany/assert"

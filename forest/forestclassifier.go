@@ -3,7 +3,7 @@ package forestclassifier
 import (
 	"fmt"
 	"strconv"
-	"strings"
+	//"strings"
 
 	"github.com/drewlanenga/multibayes/bag"
 	"github.com/drewlanenga/multibayes/tokens"
@@ -26,7 +26,7 @@ func Learn(ngrams [][]tokens.NGram, classes [][]string) (ForestBag, map[string]*
 	forestBag := make(ForestBag)
 	for class, _ := range sparseMatrix.Classes {
 		forestBag[class] = &mondrian.MondrianForest{
-			Target: "C:" + class,
+			Target: class,
 			Trees:  make(map[int64]*CloudForest.Tree),
 		}
 
@@ -34,7 +34,7 @@ func Learn(ngrams [][]tokens.NGram, classes [][]string) (ForestBag, map[string]*
 		for token, index := range matrices["tokens"].Map {
 			newMap[token] = index
 		}
-		mapKey := "C:" + class
+		mapKey := class
 		newMap[mapKey] = len(matrices["tokens"].Map)
 
 		newFeatures := make([]CloudForest.Feature, len(matrices["tokens"].Data)+1)
@@ -64,7 +64,7 @@ func (f ForestBag) Predict(tokenMatrix *CloudForest.FeatureMatrix, ngrams []toke
 
 	for _, ngram := range ngrams {
 		gramString := ngram.String()
-		//gramString = "N:" + gramString
+		gramString = "N:" + gramString
 
 		if tokenIndex, ok := tokenMatrix.Map[gramString]; ok {
 			newTokens[tokenIndex]++
@@ -73,9 +73,7 @@ func (f ForestBag) Predict(tokenMatrix *CloudForest.FeatureMatrix, ngrams []toke
 
 	newTokenMap := make(map[string]int)
 	for token, tokenindex := range tokenMatrix.Map {
-		fmt.Println(token)
-		trimmed := strings.Trim(token, "N:")
-		newTokenMap[trimmed] = tokenindex
+		newTokenMap[token] = tokenindex
 	}
 
 	// create a single row feature matrix with
@@ -92,9 +90,8 @@ func (f ForestBag) Predict(tokenMatrix *CloudForest.FeatureMatrix, ngrams []toke
 			}
 		}
 		f := &CloudForest.DenseNumFeature{
-			NumData: tokenCount,
-			Missing: make([]bool, len(Tokens)),
-			//Name:       "N:" + tokenname,
+			NumData:    tokenCount,
+			Missing:    make([]bool, len(Tokens)),
 			Name:       tokenname,
 			HasMissing: false,
 		}
@@ -107,8 +104,8 @@ func (f ForestBag) Predict(tokenMatrix *CloudForest.FeatureMatrix, ngrams []toke
 		Map:        tokenMatrix.Map,
 		CaseLabels: make([]string, 0),
 	}
-	fmt.Println(featureMatrix.Data[0])
-	fmt.Println(tokenMatrix.Data[0])
+	//fmt.Println(featureMatrix.Map)
+	//fmt.Println(tokenMatrix.Map)
 
 	predictions := make(map[string]float64)
 	for class, forest := range f {
