@@ -1,8 +1,8 @@
 package tokens
 
 import (
+	"bytes"
 	"encoding/base64"
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -18,10 +18,6 @@ const (
 	tokenSeparator = "_"
 )
 
-var (
-	stop_words = []string{`i`, `me`, `my`, `myself`, `we`, `our`, `ours`, `ourselves`, `you`, `your`, `yours`, `yourself`, `yourselves`, `he`, `him`, `his`, `himself`, `she`, `her`, `hers`, `herself`, `it`, `its`, `itself`, `they`, `them`, `their`, `theirs`, `themselves`, `what`, `which`, `who`, `whom`, `this`, `that`, `these`, `those`, `am`, `is`, `are`, `was`, `were`, `be`, `been`, `being`, `have`, `has`, `had`, `having`, `do`, `does`, `did`, `doing`, `would`, `should`, `could`, `ought`, `i'm`, `you're`, `he's`, `she's`, `it's`, `we're`, `they're`, `i've`, `you've`, `we've`, `they've`, `i'd`, `you'd`, `he'd`, `she'd`, `we'd`, `they'd`, `i'll`, `you'll`, `he'll`, `she'll`, `we'll`, `they'll`, `isn't`, `aren't`, `wasn't`, `weren't`, `hasn't`, `haven't`, `hadn't`, `doesn't`, `don't`, `didn't`, `won't`, `wouldn't`, `shan't`, `shouldn't`, `can't`, `cannot`, `couldn't`, `mustn't`, `let's`, `that's`, `who's`, `what's`, `here's`, `there's`, `when's`, `where's`, `why's`, `how's`, `a`, `an`, `the`, `and`, `but`, `if`, `or`, `because`, `as`, `until`, `while`, `of`, `at`, `by`, `for`, `with`, `about`, `against`, `between`, `into`, `through`, `during`, `before`, `after`, `above`, `below`, `to`, `from`, `up`, `down`, `in`, `out`, `on`, `off`, `over`, `under`, `again`, `further`, `then`, `once`, `here`, `there`, `when`, `where`, `why`, `how`, `all`, `any`, `both`, `each`, `few`, `more`, `most`, `other`, `some`, `such`, `no`, `nor`, `not`, `only`, `own`, `same`, `so`, `than`, `too`, `very`}
-)
-
 type NGram struct {
 	Tokens [][]byte
 }
@@ -32,7 +28,7 @@ func (ng *NGram) String() string {
 
 	for i, token := range ng.Tokens {
 		encoded[i] = string(token)
-		//encoded[i] = base64.StdEncoding.EncodeToString(token)
+		//encoded[i] = base64.StdEncoding.EncodeToString(token) // safer?
 	}
 
 	return strings.Join(encoded, tokenSeparator)
@@ -70,7 +66,7 @@ func validateConf(tc *TokenizerConf) {
 	tc.regexp = regexp.MustCompile(`[0-9A-z_'\-]+|\%|\$`)
 
 	if tc.NGramSize == 0 {
-		tc.NGramSize = 2
+		tc.NGramSize = 1
 	}
 }
 
@@ -84,35 +80,32 @@ func NewTokenizer(tc *TokenizerConf) (*Tokenizer, error) {
 func (t *Tokenizer) Parse(doc string) []NGram {
 	// maybe use token types for datetimes or something instead of
 	// the actual byte slice
-	alltokens := tokensToStrings(t.Tokenize([]byte(strings.ToLower(doc))))
+	alltokens := t.Tokenize([]byte(strings.ToLower(doc)))
 	filtered := make(map[int][]byte)
 	for i, token := range alltokens {
 		exclude := false
-		for _, stop := range stop_words {
-			if token == stop {
+		for _, stop := range stopbytes {
+			if bytes.Equal(token.Term, stop) {
 				exclude = true
 				break
 			}
 		}
 
-		// possibly check for certain types here (dates|numbers|etc)
-		// just stem in the meantime
-		token = porterstemmer.StemString(token)
-
-		if !exclude {
-			filtered[i] = []byte(token)
+		if exclude {
+			continue
 		}
-	}
-	fmt.Printf("\n%+v\n\n^", alltokens)
 
-	for i := 0; i < len(filtered); i++ {
-		if token, ok := filtered[i]; ok {
-			fmt.Printf("%s ", string(token))
-		} else {
-			fmt.Printf("* ")
+		tokenString := porterstemmer.StemString(string(token.Term))
+		//tokenBytes := porterstemmer.Stem(token.Term) // takes runes, not bytes
+
+		if token.Type == analysis.Numeric {
+			tokenString = "NUMBER"
+		} else if token.Type == analysis.DateTime {
+			tokenString = "DATE"
 		}
+
+		filtered[i] = []byte(tokenString)
 	}
-	fmt.Printf("^\n")
 
 	// only consider sequential terms as candidates for ngrams
 	// terms separated by stopwords are ineligible
@@ -139,19 +132,10 @@ func (t *Tokenizer) Parse(doc string) []NGram {
 		allNGrams = append(allNGrams, ngrams...)
 	}
 
-	for _, ngram := range allNGrams {
-		fmt.Println(ngram.String())
-	}
 	return allNGrams
 }
 
 func (t *Tokenizer) tokensToNGrams(tokens [][]byte) []NGram {
-	fmt.Printf("\n\ttokensToNGrams:\n\t\tRaw:")
-	for _, token := range tokens {
-		fmt.Printf(" %s", string(token))
-	}
-	fmt.Printf("\n")
-
 	nTokens := int64(len(tokens))
 
 	nNGrams := int64(0)
@@ -160,7 +144,6 @@ func (t *Tokenizer) tokensToNGrams(tokens [][]byte) []NGram {
 		nNGrams += chosen
 	}
 
-	// wowzers
 	ngrams := make([]NGram, 0, nNGrams)
 	for ngramSize := int64(1); ngramSize <= t.Conf.NGramSize; ngramSize++ {
 		nNGramsOfSize := choose(nTokens, ngramSize)
@@ -170,47 +153,7 @@ func (t *Tokenizer) tokensToNGrams(tokens [][]byte) []NGram {
 		}
 	}
 
-	fmt.Printf("\n\t\tNGrams:")
-	for _, ngram := range ngrams {
-		fmt.Printf(" %s", ngram.String())
-	}
-	fmt.Printf("\n")
-
 	return ngrams
-}
-
-func tokensToBytes(ts analysis.TokenStream) [][]byte {
-	bytes := make([][]byte, len(ts))
-	for i, token := range ts {
-		bytes[i] = token.Term
-
-	}
-	return bytes
-}
-
-func tokensToStrings(ts analysis.TokenStream) []string {
-	strs := make([]string, len(ts))
-	for i, token := range ts {
-		strs[i] = string(token.Term)
-	}
-	return strs
-}
-
-func tokensToStemmedBytes(ts analysis.TokenStream) [][]byte {
-	bytes := make([][]byte, len(ts))
-	for i, token := range ts {
-		stem := porterstemmer.StemString(string(token.Term))
-		bytes[i] = []byte(stem)
-	}
-	return bytes
-}
-
-func tokensToStemmedStrings(ts analysis.TokenStream) []string {
-	strs := make([]string, len(ts))
-	for i, token := range ts {
-		strs[i] = porterstemmer.StemString(string(token.Term))
-	}
-	return strs
 }
 
 // not a binomial coefficient -- combinations must be sequential
