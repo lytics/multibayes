@@ -67,7 +67,7 @@ type StopFilter struct {
 }
 
 func validateConf(tc *TokenizerConf) {
-	tc.regexp = regexp.MustCompile(`\w+|\%|\$`)
+	tc.regexp = regexp.MustCompile(`[0-9A-z_'\-]+|\%|\$`)
 
 	if tc.NGramSize == 0 {
 		tc.NGramSize = 2
@@ -84,33 +84,75 @@ func NewTokenizer(tc *TokenizerConf) (*Tokenizer, error) {
 func (t *Tokenizer) Parse(doc string) []NGram {
 	// maybe use token types for datetimes or something instead of
 	// the actual byte slice
-	tokenizedstr := tokensToStrings(t.Tokenize([]byte(strings.ToLower(doc))))
-	var filtered []string
-	var exists bool
-	for _, token := range tokenizedstr {
+	alltokens := tokensToStrings(t.Tokenize([]byte(strings.ToLower(doc))))
+	filtered := make(map[int][]byte)
+	for i, token := range alltokens {
+		exclude := false
 		for _, stop := range stop_words {
 			if token == stop {
-				exists = true
+				exclude = true
 				break
 			}
 		}
-		if !exists {
-			filtered = append(filtered, token)
+
+		// possibly check for certain types here (dates|numbers|etc)
+		// just stem in the meantime
+		token = porterstemmer.StemString(token)
+
+		if !exclude {
+			filtered[i] = []byte(token)
 		}
-		exists = false
 	}
-	//fmt.Println(tokenizedstr)
-	//fmt.Println(filtered)
+	fmt.Printf("\n%+v\n\n^", alltokens)
 
-	tokenized := make([][]byte, len(filtered))
+	for i := 0; i < len(filtered); i++ {
+		if token, ok := filtered[i]; ok {
+			fmt.Printf("%s ", string(token))
+		} else {
+			fmt.Printf("* ")
+		}
+	}
+	fmt.Printf("^\n")
+
+	// only consider sequential terms as candidates for ngrams
+	// terms separated by stopwords are ineligible
+	allNGrams := make([]NGram, 0, 100)
+	currentTokens := make([][]byte, 0, 100)
+
+	lastObserved := -1
 	for i, token := range filtered {
-		stem := porterstemmer.StemString(token)
-		tokenizedstr[i] = stem
-		tokenized[i] = []byte(stem)
-	}
-	fmt.Println(tokenizedstr)
+		if (i - 1) != lastObserved {
 
-	nTokens := int64(len(tokenized))
+			ngrams := t.tokensToNGrams(currentTokens)
+			allNGrams = append(allNGrams, ngrams...)
+
+			currentTokens = make([][]byte, 0, 100)
+		}
+
+		currentTokens = append(currentTokens, token)
+		lastObserved = i
+	}
+
+	// bring in the last one
+	if len(currentTokens) > 0 {
+		ngrams := t.tokensToNGrams(currentTokens)
+		allNGrams = append(allNGrams, ngrams...)
+	}
+
+	for _, ngram := range allNGrams {
+		fmt.Println(ngram.String())
+	}
+	return allNGrams
+}
+
+func (t *Tokenizer) tokensToNGrams(tokens [][]byte) []NGram {
+	fmt.Printf("\n\ttokensToNGrams:\n\t\tRaw:")
+	for _, token := range tokens {
+		fmt.Printf(" %s", string(token))
+	}
+	fmt.Printf("\n")
+
+	nTokens := int64(len(tokens))
 
 	nNGrams := int64(0)
 	for i := int64(1); i <= t.Conf.NGramSize; i++ {
@@ -124,9 +166,15 @@ func (t *Tokenizer) Parse(doc string) []NGram {
 		nNGramsOfSize := choose(nTokens, ngramSize)
 
 		for i := int64(0); i < nNGramsOfSize; i++ {
-			ngrams = append(ngrams, NGram{tokenized[i:(i + ngramSize)]})
+			ngrams = append(ngrams, NGram{tokens[i:(i + ngramSize)]})
 		}
 	}
+
+	fmt.Printf("\n\t\tNGrams:")
+	for _, ngram := range ngrams {
+		fmt.Printf(" %s", ngram.String())
+	}
+	fmt.Printf("\n")
 
 	return ngrams
 }
