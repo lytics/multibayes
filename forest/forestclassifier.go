@@ -56,8 +56,6 @@ func Learn(ngrams [][]tokens.NGram, classes [][]string) (ForestBag, map[string]*
 		if err != nil {
 			fmt.Println(err)
 		}
-		//mondrian.WriteForest(forestBag[class])
-
 	}
 	return forestBag, matrices
 }
@@ -100,7 +98,6 @@ func (f ForestBag) Predict(tokenMatrix *CloudForest.FeatureMatrix, ngrams []toke
 		}
 		newFeatures[tokenindex] = f
 	}
-	///
 
 	featureMatrix := &CloudForest.FeatureMatrix{
 		Data:       newFeatures,

@@ -7,11 +7,8 @@ import (
 	"strings"
 
 	"github.com/blevesearch/bleve/analysis"
-	//"github.com/blevesearch/bleve/analysis/token_filters/stop_tokens_filter"
 	"github.com/blevesearch/bleve/analysis/tokenizers/regexp_tokenizer"
 	"github.com/blevesearch/go-porterstemmer"
-	//"github.com/lytics/lio/src/catalog/prob"
-	//"github.com/lytics/lio/src/catalog/prob/data"
 )
 
 const (

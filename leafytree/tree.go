@@ -4,7 +4,6 @@ import (
 	//"fmt"
 
 	"github.com/drewlanenga/multibayes/tokens"
-	//"github.com/skelterjohn/go.matrix"
 )
 
 var (
@@ -129,12 +128,3 @@ func ngramsToStrings(ngrams []tokens.NGram) []string {
 	}
 	return ngramStrings
 }
-
-/*
-func NGramMatrix(ngrams []tokens.NGram) *DGM {
-	// initialize the ngram matrix with 0 elements
-	gramMatrix := matrix.MakeSparseMatrix(make(map[int]float64), rows, cols)
-}
-
-func TokensToMatrix()
-*/

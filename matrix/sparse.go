@@ -14,20 +14,17 @@ type SparseMatrix struct {
 type SparseColumn struct {
 	Name string
 	Data []int
-	N    int
 }
 
 func NewSparseColumn(name string) *SparseColumn {
 	return &SparseColumn{
 		Name: name,
 		Data: make([]int, 0, 1000),
-		N:    0,
 	}
 }
 
 func (s *SparseColumn) Add(index int) {
 	s.Data = append(s.Data, index)
-	s.N++
 }
 
 // return the number of rows that contain the column
@@ -66,7 +63,6 @@ func (s *SparseMatrix) Add(ngrams []tokens.NGram, classes []string) {
 		return
 	}
 	for _, class := range classes {
-		//cclass := "C:" + class
 		if _, ok := s.Classes[class]; !ok {
 			s.Classes[class] = NewSparseColumn(class)
 		}
@@ -76,7 +72,6 @@ func (s *SparseMatrix) Add(ngrams []tokens.NGram, classes []string) {
 
 	for _, ngram := range ngrams {
 		gramString := ngram.String()
-		//ngramString := "N:" + gramString
 		if _, ok := s.Tokens[gramString]; !ok {
 			s.Tokens[gramString] = NewSparseColumn(gramString)
 		}
