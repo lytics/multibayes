@@ -1,11 +1,11 @@
 package bayes
 
 import (
-	"github.com/drewlanenga/multibayes/bag"
+	"github.com/drewlanenga/multibayes/matrix"
 	"github.com/drewlanenga/multibayes/tokens"
 )
 
-func Posterior(s *bag.SparseMatrix, subject []tokens.NGram) map[string]float64 {
+func Posterior(s *matrix.SparseMatrix, subject []tokens.NGram) map[string]float64 {
 	predictions := make(map[string]float64)
 
 	var prior float64

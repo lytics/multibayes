@@ -1,4 +1,4 @@
-package bag
+package matrix
 
 import (
 	"testing"

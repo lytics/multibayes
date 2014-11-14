@@ -1,4 +1,4 @@
-package bag
+package matrix
 
 import (
 	"github.com/drewlanenga/multibayes/tokens"

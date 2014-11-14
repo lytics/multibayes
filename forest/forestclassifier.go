@@ -5,7 +5,7 @@ import (
 	"strconv"
 	//"strings"
 
-	"github.com/drewlanenga/multibayes/bag"
+	"github.com/drewlanenga/multibayes/matrix"
 	"github.com/drewlanenga/multibayes/tokens"
 	"github.com/lytics/lio/src/scores/mondrian"
 	"github.com/ryanbressler/CloudForest"
@@ -19,7 +19,7 @@ type ForestBag map[string]*mondrian.MondrianForest
 
 // give it a training set? could be rewritten to be given a single line
 func Learn(ngrams [][]tokens.NGram, classes [][]string) (ForestBag, map[string]*CloudForest.FeatureMatrix) {
-	sparseMatrix := bag.NewSparseMatrix()
+	sparseMatrix := matrix.NewSparseMatrix()
 	for i, ngram := range ngrams {
 		sparseMatrix.Add(ngram, classes[i])
 	}

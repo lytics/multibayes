@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/bmizerany/assert"
-	"github.com/drewlanenga/multibayes/bag"
+	"github.com/drewlanenga/multibayes/matrix"
 	"github.com/drewlanenga/multibayes/testutil"
 	"github.com/drewlanenga/multibayes/tokens"
 )
@@ -17,7 +17,7 @@ func TestPosterior(t *testing.T) {
 	})
 	assert.Equalf(t, err, nil, "Error creating new tokenizer")
 
-	sparse := bag.NewSparseMatrix()
+	sparse := matrix.NewSparseMatrix()
 	for i, _ := range testdata.Docs {
 		ngrams := tokenizer.Parse(testdata.Docs[i])
 		sparse.Add(ngrams, testdata.Classes[i])
