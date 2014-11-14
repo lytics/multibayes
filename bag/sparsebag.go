@@ -66,22 +66,22 @@ func (s *SparseMatrix) Add(ngrams []tokens.NGram, classes []string) {
 		return
 	}
 	for _, class := range classes {
-		cclass := "C:" + class
-		if _, ok := s.Classes[cclass]; !ok {
-			s.Classes[cclass] = NewSparseColumn(cclass)
+		//cclass := "C:" + class
+		if _, ok := s.Classes[class]; !ok {
+			s.Classes[class] = NewSparseColumn(class)
 		}
 
-		s.Classes[cclass].Add(s.N)
+		s.Classes[class].Add(s.N)
 	}
 
 	for _, ngram := range ngrams {
 		gramString := ngram.String()
-		ngramString := "N:" + gramString
-		if _, ok := s.Tokens[ngramString]; !ok {
-			s.Tokens[ngramString] = NewSparseColumn(ngramString)
+		//ngramString := "N:" + gramString
+		if _, ok := s.Tokens[gramString]; !ok {
+			s.Tokens[gramString] = NewSparseColumn(gramString)
 		}
 
-		s.Tokens[ngramString].Add(s.N)
+		s.Tokens[gramString].Add(s.N)
 	}
 	// increment the row counter
 	s.N++

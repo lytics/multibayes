@@ -11,6 +11,9 @@ import (
 	"github.com/ryanbressler/CloudForest"
 )
 
+// fix so that every token header has the prefix "N:" (and every class "C:")
+// before building the forest and using it for predictions
+
 // will have a forest for every class type
 type ForestBag map[string]*mondrian.MondrianForest
 
@@ -64,7 +67,7 @@ func (f ForestBag) Predict(tokenMatrix *CloudForest.FeatureMatrix, ngrams []toke
 
 	for _, ngram := range ngrams {
 		gramString := ngram.String()
-		gramString = "N:" + gramString
+		//gramString = "N:" + gramString
 
 		if tokenIndex, ok := tokenMatrix.Map[gramString]; ok {
 			newTokens[tokenIndex]++
