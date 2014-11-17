@@ -1,4 +1,4 @@
-package bayes
+package multibayes
 
 import (
 	"fmt"
@@ -24,15 +24,8 @@ func TestPosterior(t *testing.T) {
 	}
 
 	for i, _ := range testdata.Docs {
-		fmt.Printf("Subject: %s\n", testdata.Docs[i])
+		fmt.Printf("\n\nSubject: %s\n", testdata.Docs[i])
 		subject := tokenizer.Parse(testdata.Docs[i])
-		predictions := Posterior(sparse, subject)
-		for class, pred := range predictions {
-			if pred > 0.1 {
-				fmt.Printf("%s: %.4f,\n", class, pred)
-			}
-		}
-		fmt.Println()
+		_ = Posterior(sparse, subject)
 	}
-
 }
