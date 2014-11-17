@@ -18,8 +18,8 @@ func Posterior(s *matrix.SparseMatrix, subject []tokens.NGram) map[string]float6
 		n := classcolumn.Count()
 
 		priors := []float64{
-			float64(n+smoother) / float64(s.N+smoother), // P(C=Y)
-			float64(s.N-n) / float64(s.N+smoother),      // P(C=N)
+			float64(n+smoother) / float64(s.N+(smoother*2)),     // P(C=Y)
+			float64(s.N-n+smoother) / float64(s.N+(smoother*2)), // P(C=N)
 		}
 
 		loglikelihood := []float64{1.0, 1.0}
