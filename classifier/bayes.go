@@ -1,53 +1,115 @@
-package bayes
+package multibayes
 
 import (
+	"fmt"
 	"github.com/drewlanenga/multibayes/matrix"
 	"github.com/drewlanenga/multibayes/tokens"
+	"math"
+)
+
+var (
+	smoother = 1 // laplace
 )
 
 func Posterior(s *matrix.SparseMatrix, subject []tokens.NGram) map[string]float64 {
 	predictions := make(map[string]float64)
 
-	var prior float64
-	likelihood := 1.0
-	var conditional float64
-	evidence := make(map[string]float64)
-	var totalevidence float64
-
 	for class, classcolumn := range s.Classes {
-		prior = float64(classcolumn.Count()) / float64(s.N)
+		n := classcolumn.Count()
+
+		priors := []float64{
+			float64(n+smoother) / float64(s.N+smoother), // P(C=Y)
+			float64(s.N-n) / float64(s.N+smoother),      // P(C=N)
+		}
+
+		loglikelihood := []float64{1.0, 1.0}
+
 		// check if subject token is in our token sparse matrix
 		for _, subjecttoken := range subject {
 			if tokencolumn, ok := s.Tokens[subjecttoken.String()]; ok {
-				// if a subject token is, then check if this token has
-				// occurred for this class type
-				array := intersection(classcolumn.Data, tokencolumn.Data)
-				conditional = float64(len(array))
-				// conditional should be the percentage of times this token
-				// occurred for a specific class
-				conditional = (conditional + 1) / (float64(len(classcolumn.Data)) + 1)
-				likelihood *= conditional
-				conditional = 0.0
+				// conditional probability the token occurs for the class
+				joint := intersection(tokencolumn.Data, classcolumn.Data)
+				conditional := float64(joint+smoother) / float64(n+(smoother*2)) // P(F|C=Y)
+				loglikelihood[0] += math.Log(conditional)
+
+				// conditional probability the token occurs if the class doesn't apply
+				not := notintersection(tokencolumn.Data, classcolumn.Data)
+				notconditional := float64(not+smoother) / float64(n+(smoother*2)) // P(F|C=N)
+				loglikelihood[1] += math.Log(notconditional)
 			}
 		}
-		evidence[class] = prior * likelihood
-		totalevidence += prior * likelihood
-		likelihood = 1.0
+
+		likelihood := []float64{
+			math.Exp(loglikelihood[0]),
+			math.Exp(loglikelihood[1]),
+		}
+
+		prob := bayesRule(priors, likelihood) // P(C|F)
+		predictions[class] = prob[0]
 	}
-	for class, _ := range s.Classes {
-		predictions[class] = evidence[class] / totalevidence
+
+	// just for debugging -- delete later
+	fmt.Printf("\n\tPredictions:")
+	for class, prob := range predictions {
+		if prob > 0.1 {
+			fmt.Printf("\n\t\t%s, %.8f", class, prob)
+		}
 	}
+	fmt.Printf("\n\n")
+
 	return predictions
 }
 
-func intersection(array1, array2 []int) []int {
-	var newarray []int
+func bayesRule(prior, likelihood []float64) []float64 {
+
+	posterior := make([]float64, len(prior))
+
+	sum := 0.0
+	for i, _ := range prior {
+		combined := prior[i] * likelihood[i]
+
+		posterior[i] = combined
+		sum += combined
+	}
+
+	// scale the likelihoods
+	for i, _ := range posterior {
+		posterior[i] /= sum
+	}
+
+	return posterior
+}
+
+// elements that are in both array1 and array2
+func intersection(array1, array2 []int) int {
+	var count int
 	for _, elem1 := range array1 {
 		for _, elem2 := range array2 {
 			if elem1 == elem2 {
-				newarray = append(newarray, elem1)
+				count++
+				break
 			}
 		}
 	}
-	return newarray
+	return count
+}
+
+// given it's not an element of array2, the count of array1
+func notintersection(array1, array2 []int) int {
+	var count int
+
+	for _, elem1 := range array1 {
+		isElement := false
+		for _, elem2 := range array2 {
+			if elem1 == elem2 {
+				isElement = true
+				break
+			}
+		}
+
+		if !isElement {
+			count++
+		}
+	}
+	return count
 }
