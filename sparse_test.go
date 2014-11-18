@@ -1,16 +1,15 @@
-package matrix
+package multibayes
 
 import (
 	"testing"
 
 	"github.com/bmizerany/assert"
 	"github.com/drewlanenga/multibayes/testutil"
-	"github.com/drewlanenga/multibayes/tokens"
 )
 
 func TestSparseBag(t *testing.T) {
 	testdata := testutil.GetTestData()
-	tokenizer, err := tokens.NewTokenizer(&tokens.TokenizerConf{
+	tokenizer, err := NewTokenizer(&TokenizerConf{
 		NGramSize: 1,
 	})
 	assert.Equalf(t, err, nil, "Error creating new tokenizer")
@@ -26,7 +25,7 @@ func TestSparseBag(t *testing.T) {
 
 func TestToFeatureMatrix(t *testing.T) {
 	testdata := testutil.GetTestData()
-	tokenizer, err := tokens.NewTokenizer(&tokens.TokenizerConf{
+	tokenizer, err := NewTokenizer(&TokenizerConf{
 		NGramSize: 1,
 	})
 	assert.Equalf(t, err, nil, "Error creating new tokenizer")

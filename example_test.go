@@ -1,5 +1,9 @@
 package multibayes
 
+import (
+	"fmt"
+)
+
 func Example() {
 	documents := []struct {
 		Text    string
@@ -19,19 +23,14 @@ func Example() {
 		},
 	}
 
-	tokenizer, _ := NewTokenizer(&TokenizerConf{
-		NGramSize: 1,
-	})
-
-	sparse := NewSparseMatrix()
+	classifier := NewClassifier()
 
 	for _, document := range documents {
-		ngrams := tokenizer.Parse(document.Text)
-		sparse.Add(ngrams, document.Classes)
+		classifier.Add(document.Text, document.Classes)
 	}
 
 	// predict new classes
-	probs := Posterior(sparse, tokenizer.Parse("Aaron's dog has fleas."))
+	probs := classifier.Posterior("Aaron's dog has fleas.")
 	fmt.Printf("Posterior Probabilities: %+v\n", probs)
 
 	// Posterior Probabilities: map[vet:0.8571 cdc:0.2727]

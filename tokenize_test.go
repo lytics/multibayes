@@ -1,7 +1,6 @@
-package tokens
+package multibayes
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/bmizerany/assert"
@@ -18,14 +17,8 @@ func TestTokenizer(t *testing.T) {
 	assert.Equalf(t, nil, err, "Error creating tokenizer: %v", err)
 
 	for _, doc := range testdata.Docs {
-		fmt.Printf("\nDoc:%s\n", doc)
-		grams := tokenizer.Parse(doc)
-
-		for _, gram := range grams {
-			fmt.Printf("\tGRAM: %s\n", gram.String())
-		}
-
+		_ = tokenizer.Parse(doc)
 	}
 
-	// test token length here later
+	// test token length here later?
 }
