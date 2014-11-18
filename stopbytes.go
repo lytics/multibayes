@@ -1,4 +1,4 @@
-package tokens
+package multibayes
 
 var (
 	stopbytes = [][]byte{

@@ -1,9 +1,6 @@
 package multibayes
 
 import (
-	"fmt"
-	"github.com/drewlanenga/multibayes/matrix"
-	"github.com/drewlanenga/multibayes/tokens"
 	"math"
 )
 
@@ -11,22 +8,46 @@ var (
 	smoother = 1 // laplace
 )
 
-func Posterior(s *matrix.SparseMatrix, subject []tokens.NGram) map[string]float64 {
+type Classifier struct {
+	Tokenizer *Tokenizer
+	Matrix    *SparseMatrix
+}
+
+func NewClassifier() *Classifier {
+	tokenizer, _ := NewTokenizer(&TokenizerConf{
+		NGramSize: 1,
+	})
+
+	sparse := NewSparseMatrix()
+
+	return &Classifier{
+		Tokenizer: tokenizer,
+		Matrix:    sparse,
+	}
+}
+
+func (c *Classifier) Add(document string, classes []string) {
+	ngrams := c.Tokenizer.Parse(document)
+	c.Matrix.Add(ngrams, classes)
+}
+
+func (c *Classifier) Posterior(document string) map[string]float64 {
+	tokens := c.Tokenizer.Parse(document)
 	predictions := make(map[string]float64)
 
-	for class, classcolumn := range s.Classes {
+	for class, classcolumn := range c.Matrix.Classes {
 		n := classcolumn.Count()
 
 		priors := []float64{
-			float64(n+smoother) / float64(s.N+(smoother*2)),     // P(C=Y)
-			float64(s.N-n+smoother) / float64(s.N+(smoother*2)), // P(C=N)
+			float64(n+smoother) / float64(c.Matrix.N+(smoother*2)),            // P(C=Y)
+			float64(c.Matrix.N-n+smoother) / float64(c.Matrix.N+(smoother*2)), // P(C=N)
 		}
 
 		loglikelihood := []float64{1.0, 1.0}
 
-		// check if subject token is in our token sparse matrix
-		for _, subjecttoken := range subject {
-			if tokencolumn, ok := s.Tokens[subjecttoken.String()]; ok {
+		// check if each token is in our token sparse matrix
+		for _, token := range tokens {
+			if tokencolumn, ok := c.Matrix.Tokens[token.String()]; ok {
 				// conditional probability the token occurs for the class
 				joint := intersection(tokencolumn.Data, classcolumn.Data)
 				conditional := float64(joint+smoother) / float64(n+(smoother*2)) // P(F|C=Y)
@@ -47,15 +68,6 @@ func Posterior(s *matrix.SparseMatrix, subject []tokens.NGram) map[string]float6
 		prob := bayesRule(priors, likelihood) // P(C|F)
 		predictions[class] = prob[0]
 	}
-
-	// just for debugging -- delete later
-	fmt.Printf("\n\tPredictions:")
-	for class, prob := range predictions {
-		if prob > 0.1 {
-			fmt.Printf("\n\t\t%s, %.8f", class, prob)
-		}
-	}
-	fmt.Printf("\n\n")
 
 	return predictions
 }

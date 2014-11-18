@@ -1,31 +1,20 @@
 package multibayes
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/bmizerany/assert"
-	"github.com/drewlanenga/multibayes/matrix"
-	"github.com/drewlanenga/multibayes/testutil"
-	"github.com/drewlanenga/multibayes/tokens"
+	//"github.com/bmizerany/assert"
 )
 
 func TestPosterior(t *testing.T) {
-	testdata := testutil.GetTestData()
-	tokenizer, err := tokens.NewTokenizer(&tokens.TokenizerConf{
-		NGramSize: 1,
-	})
-	assert.Equalf(t, err, nil, "Error creating new tokenizer")
+	classifier := NewClassifier()
 
-	sparse := matrix.NewSparseMatrix()
-	for i, _ := range testdata.Docs {
-		ngrams := tokenizer.Parse(testdata.Docs[i])
-		sparse.Add(ngrams, testdata.Classes[i])
+	testdata := getTestData()
+	for _, document := range testdata {
+		classifier.Add(document.Text, document.Classes)
 	}
 
-	for i, _ := range testdata.Docs {
-		fmt.Printf("\n\nSubject: %s\n", testdata.Docs[i])
-		subject := tokenizer.Parse(testdata.Docs[i])
-		_ = Posterior(sparse, subject)
+	for _, document := range testdata {
+		_ = classifier.Posterior(document.Text)
 	}
 }

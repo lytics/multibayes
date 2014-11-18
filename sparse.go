@@ -1,7 +1,6 @@
-package matrix
+package multibayes
 
 import (
-	"github.com/drewlanenga/multibayes/tokens"
 	"github.com/ryanbressler/CloudForest"
 )
 
@@ -58,7 +57,7 @@ func NewSparseMatrix() *SparseMatrix {
 	}
 }
 
-func (s *SparseMatrix) Add(ngrams []tokens.NGram, classes []string) {
+func (s *SparseMatrix) Add(ngrams []NGram, classes []string) {
 	if len(ngrams) == 0 || len(classes) == 0 {
 		return
 	}
