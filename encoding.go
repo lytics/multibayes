@@ -4,22 +4,33 @@ import (
 	"encoding/json"
 )
 
-// Serialize the classifier to JSON.
+type jsonableClassifier struct {
+	Matrix *sparseMatrix `json:"matrix"`
+}
+
 func (c *Classifier) MarshalJSON() ([]byte, error) {
-	return json.Marshal(*c)
+	return json.Marshal(&jsonableClassifier{c.Matrix})
+}
+
+func (c *Classifier) UnmarshalJSON(buf []byte) error {
+	j := jsonableClassifier{}
+
+	err := json.Unmarshal(buf, &j)
+	if err != nil {
+		return nil
+	}
+
+	*c = *NewClassifier()
+	c.Matrix = j.Matrix
+
+	return nil
 }
 
 // Initialize a new classifier from a JSON byte slice.
 func NewClassifierFromJSON(buf []byte) (*Classifier, error) {
-	tokenizer, _ := newTokenizer(&tokenizerConf{
-		NGramSize: 1,
-	})
+	classifier := &Classifier{}
 
-	classifier := &Classifier{
-		Tokenizer: tokenizer,
-	}
-
-	err := json.Unmarshal(buf, classifier)
+	err := classifier.UnmarshalJSON(buf)
 	if err != nil {
 		return nil, err
 	}
