@@ -1,23 +1,17 @@
 package multibayes
 
-import (
-	"github.com/ryanbressler/CloudForest"
-)
-
 type SparseMatrix struct {
-	Tokens  map[string]*SparseColumn // []map[tokenindex]occurence
-	Classes map[string]*SparseColumn // map[classname]classindex
-	N       int                      // number of rows currently in the matrix
+	Tokens  map[string]*SparseColumn `json:"tokens"`  // []map[tokenindex]occurence
+	Classes map[string]*SparseColumn `json:"classes"` // map[classname]classindex
+	N       int                      `json:"n"`       // number of rows currently in the matrix
 }
 
 type SparseColumn struct {
-	Name string
-	Data []int
+	Data []int `json:"data"`
 }
 
-func NewSparseColumn(name string) *SparseColumn {
+func NewSparseColumn() *SparseColumn {
 	return &SparseColumn{
-		Name: name,
 		Data: make([]int, 0, 1000),
 	}
 }
@@ -40,15 +34,6 @@ func (s *SparseColumn) Expand(n int) []float64 {
 	return expanded
 }
 
-func (s *SparseColumn) ToFeature(n int) CloudForest.Feature {
-	return &CloudForest.DenseNumFeature{
-		NumData:    s.Expand(n),
-		Missing:    make([]bool, n), // do we need this if HasMissing is false?
-		Name:       s.Name,
-		HasMissing: false,
-	}
-}
-
 func NewSparseMatrix() *SparseMatrix {
 	return &SparseMatrix{
 		Tokens:  make(map[string]*SparseColumn),
@@ -63,7 +48,7 @@ func (s *SparseMatrix) Add(ngrams []NGram, classes []string) {
 	}
 	for _, class := range classes {
 		if _, ok := s.Classes[class]; !ok {
-			s.Classes[class] = NewSparseColumn(class)
+			s.Classes[class] = NewSparseColumn()
 		}
 
 		s.Classes[class].Add(s.N)
@@ -72,38 +57,11 @@ func (s *SparseMatrix) Add(ngrams []NGram, classes []string) {
 	for _, ngram := range ngrams {
 		gramString := ngram.String()
 		if _, ok := s.Tokens[gramString]; !ok {
-			s.Tokens[gramString] = NewSparseColumn(gramString)
+			s.Tokens[gramString] = NewSparseColumn()
 		}
 
 		s.Tokens[gramString].Add(s.N)
 	}
 	// increment the row counter
 	s.N++
-}
-
-func (s *SparseMatrix) ToFeatureMatrix() map[string]*CloudForest.FeatureMatrix {
-	featureMatrices := make(map[string]*CloudForest.FeatureMatrix)
-
-	featureMatrices["tokens"] = toFeatureMatrix(s.Tokens, s.N)
-	featureMatrices["classes"] = toFeatureMatrix(s.Classes, s.N)
-
-	return featureMatrices
-}
-
-func toFeatureMatrix(matrixMap map[string]*SparseColumn, nrow int) *CloudForest.FeatureMatrix {
-	features := make([]CloudForest.Feature, 0, len(matrixMap))
-	featureMap := make(map[string]int)
-
-	i := 0
-	for token, column := range matrixMap {
-		features = append(features, column.ToFeature(nrow))
-		featureMap[token] = i
-		i++
-	}
-
-	return &CloudForest.FeatureMatrix{
-		Data:       features,
-		Map:        featureMap,
-		CaseLabels: make([]string, 0), // not really relevant here
-	}
 }

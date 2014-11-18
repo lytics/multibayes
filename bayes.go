@@ -9,8 +9,8 @@ var (
 )
 
 type Classifier struct {
-	Tokenizer *Tokenizer
-	Matrix    *SparseMatrix
+	Tokenizer *Tokenizer    `json:"-"`
+	Matrix    *SparseMatrix `json:"matrix"`
 }
 
 func NewClassifier() *Classifier {
