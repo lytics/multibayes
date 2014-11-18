@@ -4,11 +4,10 @@ import (
 	"testing"
 
 	"github.com/bmizerany/assert"
-	"github.com/drewlanenga/multibayes/testutil"
 )
 
 func TestTokenizer(t *testing.T) {
-	testdata := testutil.GetTestData()
+	testdata := getTestData()
 
 	tokenizer, err := NewTokenizer(&TokenizerConf{
 		NGramSize: 1,
@@ -16,8 +15,8 @@ func TestTokenizer(t *testing.T) {
 
 	assert.Equalf(t, nil, err, "Error creating tokenizer: %v", err)
 
-	for _, doc := range testdata.Docs {
-		_ = tokenizer.Parse(doc)
+	for _, doc := range testdata {
+		_ = tokenizer.Parse(doc.Text)
 	}
 
 	// test token length here later?

@@ -4,11 +4,10 @@ import (
 	"testing"
 
 	"github.com/bmizerany/assert"
-	"github.com/drewlanenga/multibayes/testutil"
 )
 
 func TestSparseBag(t *testing.T) {
-	testdata := testutil.GetTestData()
+	testdata := getTestData()
 	tokenizer, err := NewTokenizer(&TokenizerConf{
 		NGramSize: 1,
 	})
@@ -16,15 +15,14 @@ func TestSparseBag(t *testing.T) {
 
 	sparse := NewSparseMatrix()
 
-	for i, _ := range testdata.Docs {
-		ngrams := tokenizer.Parse(testdata.Docs[i])
-
-		sparse.Add(ngrams, testdata.Classes[i])
+	for _, document := range testdata {
+		ngrams := tokenizer.Parse(document.Text)
+		sparse.Add(ngrams, document.Classes)
 	}
 }
 
 func TestToFeatureMatrix(t *testing.T) {
-	testdata := testutil.GetTestData()
+	testdata := getTestData()
 	tokenizer, err := NewTokenizer(&TokenizerConf{
 		NGramSize: 1,
 	})
@@ -32,10 +30,9 @@ func TestToFeatureMatrix(t *testing.T) {
 
 	sparse := NewSparseMatrix()
 
-	for i, _ := range testdata.Docs {
-		ngrams := tokenizer.Parse(testdata.Docs[i])
-
-		sparse.Add(ngrams, testdata.Classes[i])
+	for _, document := range testdata {
+		ngrams := tokenizer.Parse(document.Text)
+		sparse.Add(ngrams, document.Classes)
 	}
 
 	matrices := sparse.ToFeatureMatrix()

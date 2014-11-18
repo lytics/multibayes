@@ -4,18 +4,17 @@ import (
 	"testing"
 
 	//"github.com/bmizerany/assert"
-	"github.com/drewlanenga/multibayes/testutil"
 )
 
 func TestPosterior(t *testing.T) {
 	classifier := NewClassifier()
 
-	testdata := testutil.GetTestData()
-	for i, _ := range testdata.Docs {
-		classifier.Add(testdata.Docs[i], testdata.Classes[i])
+	testdata := getTestData()
+	for _, document := range testdata {
+		classifier.Add(document.Text, document.Classes)
 	}
 
-	for i, _ := range testdata.Docs {
-		_ = classifier.Posterior(testdata.Docs[i])
+	for _, document := range testdata {
+		_ = classifier.Posterior(document.Text)
 	}
 }

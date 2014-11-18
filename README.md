@@ -3,7 +3,7 @@ Multibayes
 
 Multi-multinomial naive Bayesian document classification.
 
-Often in document classification, a document may have more than one relevant classification -- a question on [stackoverflow](http://stackoverflow.com) might have tags "go", "map", and "interface".  The multibayes library strives to offer efficient storage and calculation of Bayesian posterior classification probabilities.
+Often in document classification, a document may have more than one relevant classification -- a question on [stackoverflow](http://stackoverflow.com) might have tags "go", "map", and "interface".  The multibayes library strives to offer efficient storage and calculation of multiple Bayesian posterior classification probabilities.
 
 ## Example
 
