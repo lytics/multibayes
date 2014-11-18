@@ -6,14 +6,14 @@ import (
 	"github.com/bmizerany/assert"
 )
 
-func TestSparseBag(t *testing.T) {
+func TestSparseMatrix(t *testing.T) {
 	testdata := getTestData()
-	tokenizer, err := NewTokenizer(&TokenizerConf{
+	tokenizer, err := newTokenizer(&tokenizerConf{
 		NGramSize: 1,
 	})
 	assert.Equalf(t, err, nil, "Error creating new tokenizer")
 
-	sparse := NewSparseMatrix()
+	sparse := newSparseMatrix()
 
 	for _, document := range testdata {
 		ngrams := tokenizer.Parse(document.Text)

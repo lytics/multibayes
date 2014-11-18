@@ -9,34 +9,39 @@ var (
 )
 
 type Classifier struct {
-	Tokenizer *Tokenizer    `json:"-"`
-	Matrix    *SparseMatrix `json:"matrix"`
+	Tokenizer *tokenizer    `json:"-"`
+	Matrix    *sparseMatrix `json:"matrix"`
 }
 
+// Create a new multibayes classifier.
 func NewClassifier() *Classifier {
-	tokenizer, _ := NewTokenizer(&TokenizerConf{
+	tokenize, _ := newTokenizer(&tokenizerConf{
 		NGramSize: 1,
 	})
 
-	sparse := NewSparseMatrix()
+	sparse := newSparseMatrix()
 
 	return &Classifier{
-		Tokenizer: tokenizer,
+		Tokenizer: tokenize,
 		Matrix:    sparse,
 	}
 }
 
+// Train the classifier with a new document and its classes.
 func (c *Classifier) Add(document string, classes []string) {
 	ngrams := c.Tokenizer.Parse(document)
 	c.Matrix.Add(ngrams, classes)
 }
 
+// Calculate the posterior probability for a new document on each
+// class from the training set.
 func (c *Classifier) Posterior(document string) map[string]float64 {
 	tokens := c.Tokenizer.Parse(document)
 	predictions := make(map[string]float64)
 
 	for class, classcolumn := range c.Matrix.Classes {
 		n := classcolumn.Count()
+		smoothN := n + (smoother * 2)
 
 		priors := []float64{
 			float64(n+smoother) / float64(c.Matrix.N+(smoother*2)),            // P(C=Y)
@@ -50,12 +55,12 @@ func (c *Classifier) Posterior(document string) map[string]float64 {
 			if tokencolumn, ok := c.Matrix.Tokens[token.String()]; ok {
 				// conditional probability the token occurs for the class
 				joint := intersection(tokencolumn.Data, classcolumn.Data)
-				conditional := float64(joint+smoother) / float64(n+(smoother*2)) // P(F|C=Y)
+				conditional := float64(joint+smoother) / float64(smoothN) // P(F|C=Y)
 				loglikelihood[0] += math.Log(conditional)
 
 				// conditional probability the token occurs if the class doesn't apply
 				not := notintersection(tokencolumn.Data, classcolumn.Data)
-				notconditional := float64(not+smoother) / float64(n+(smoother*2)) // P(F|C=N)
+				notconditional := float64(not+smoother) / float64(smoothN) // P(F|C=N)
 				loglikelihood[1] += math.Log(notconditional)
 			}
 		}

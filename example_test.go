@@ -25,6 +25,7 @@ func Example() {
 
 	classifier := NewClassifier()
 
+	// train the classifier
 	for _, document := range documents {
 		classifier.Add(document.Text, document.Classes)
 	}
@@ -33,5 +34,5 @@ func Example() {
 	probs := classifier.Posterior("Aaron's dog has fleas.")
 	fmt.Printf("Posterior Probabilities: %+v\n", probs)
 
-	// Posterior Probabilities: map[vet:0.8571 cdc:0.2727]
+	// Output: Posterior Probabilities: map[vet:0.8571428571428571 cdc:0.27272727272727276]
 }
