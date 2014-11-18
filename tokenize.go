@@ -15,12 +15,12 @@ const (
 	tokenSeparator = "_"
 )
 
-type NGram struct {
+type ngram struct {
 	Tokens [][]byte
 }
 
 // encodes in base64 for safe comparison
-func (ng *NGram) String() string {
+func (ng *ngram) String() string {
 	encoded := make([]string, len(ng.Tokens))
 
 	for i, token := range ng.Tokens {
@@ -31,7 +31,7 @@ func (ng *NGram) String() string {
 	return strings.Join(encoded, tokenSeparator)
 }
 
-func DecodeNGram(s string) (*NGram, error) {
+func decodeNGram(s string) (*ngram, error) {
 	encodedTokens := strings.Split(s, tokenSeparator)
 
 	tokens := make([][]byte, len(encodedTokens))
@@ -43,38 +43,38 @@ func DecodeNGram(s string) (*NGram, error) {
 			return nil, err
 		}
 	}
-	return &NGram{tokens}, nil
+	return &ngram{tokens}, nil
 }
 
-type TokenizerConf struct {
+type tokenizerConf struct {
 	regexp    *regexp.Regexp
 	NGramSize int64
 }
 
-type Tokenizer struct {
+type tokenizer struct {
 	regexp_tokenizer.RegexpTokenizer
-	Conf *TokenizerConf
+	Conf *tokenizerConf
 }
 
-type StopFilter struct {
-}
-
-func validateConf(tc *TokenizerConf) {
+func validateConf(tc *tokenizerConf) {
 	tc.regexp = regexp.MustCompile(`[0-9A-z_'\-]+|\%|\$`)
 
-	if tc.NGramSize == 0 {
-		tc.NGramSize = 1
-	}
+	// TODO: We force NGramSize = 1 so as to create disjoint ngrams,
+	// which is necessary for the naive assumption of conditional
+	// independence among tokens. It would be great to allow ngrams
+	// to be greater than 1 and select only disjoint ngrams from the
+	// tokenizer.
+	tc.NGramSize = 1
 }
 
-func NewTokenizer(tc *TokenizerConf) (*Tokenizer, error) {
+func newTokenizer(tc *tokenizerConf) (*tokenizer, error) {
 	validateConf(tc)
 
-	return &Tokenizer{*regexp_tokenizer.NewRegexpTokenizer(tc.regexp), tc}, nil
+	return &tokenizer{*regexp_tokenizer.NewRegexpTokenizer(tc.regexp), tc}, nil
 }
 
 // Tokenize and Gramify
-func (t *Tokenizer) Parse(doc string) []NGram {
+func (t *tokenizer) Parse(doc string) []ngram {
 	// maybe use token types for datetimes or something instead of
 	// the actual byte slice
 	alltokens := t.Tokenize([]byte(strings.ToLower(doc)))
@@ -106,7 +106,7 @@ func (t *Tokenizer) Parse(doc string) []NGram {
 
 	// only consider sequential terms as candidates for ngrams
 	// terms separated by stopwords are ineligible
-	allNGrams := make([]NGram, 0, 100)
+	allNGrams := make([]ngram, 0, 100)
 	currentTokens := make([][]byte, 0, 100)
 
 	lastObserved := -1
@@ -132,7 +132,7 @@ func (t *Tokenizer) Parse(doc string) []NGram {
 	return allNGrams
 }
 
-func (t *Tokenizer) tokensToNGrams(tokens [][]byte) []NGram {
+func (t *tokenizer) tokensToNGrams(tokens [][]byte) []ngram {
 	nTokens := int64(len(tokens))
 
 	nNGrams := int64(0)
@@ -141,12 +141,12 @@ func (t *Tokenizer) tokensToNGrams(tokens [][]byte) []NGram {
 		nNGrams += chosen
 	}
 
-	ngrams := make([]NGram, 0, nNGrams)
+	ngrams := make([]ngram, 0, nNGrams)
 	for ngramSize := int64(1); ngramSize <= t.Conf.NGramSize; ngramSize++ {
 		nNGramsOfSize := choose(nTokens, ngramSize)
 
 		for i := int64(0); i < nNGramsOfSize; i++ {
-			ngrams = append(ngrams, NGram{tokens[i:(i + ngramSize)]})
+			ngrams = append(ngrams, ngram{tokens[i:(i + ngramSize)]})
 		}
 	}
 

@@ -1,20 +1,15 @@
 package multibayes
 
 import (
+	"github.com/bmizerany/assert"
 	"testing"
-
-	//"github.com/bmizerany/assert"
 )
 
 func TestPosterior(t *testing.T) {
 	classifier := NewClassifier()
+	classifier.trainWithTestData()
 
-	testdata := getTestData()
-	for _, document := range testdata {
-		classifier.Add(document.Text, document.Classes)
-	}
+	probs := classifier.Posterior("Aaron's dog has tons of fleas")
 
-	for _, document := range testdata {
-		_ = classifier.Posterior(document.Text)
-	}
+	assert.Equalf(t, len(classifier.Matrix.Classes), len(probs), "Posterior returned incorrect number of classes")
 }
