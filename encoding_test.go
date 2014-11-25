@@ -1,7 +1,6 @@
 package multibayes
 
 import (
-	"fmt"
 	"github.com/bmizerany/assert"
 	"testing"
 )
@@ -12,8 +11,6 @@ func TestClassifierJSON(t *testing.T) {
 
 	b, err := classifier.MarshalJSON()
 	assert.Equalf(t, nil, err, "Error marshaling JSON: %v\n", err)
-
-	fmt.Println(string(b))
 
 	newclass, err := NewClassifierFromJSON(b)
 	assert.Equalf(t, nil, err, "Error unmarshaling JSON: %v\n", err)
