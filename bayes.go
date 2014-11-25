@@ -5,7 +5,8 @@ import (
 )
 
 var (
-	smoother = 1 // laplace
+	smoother     = 1 // laplace
+	minClassSize = 5
 )
 
 type Classifier struct {
@@ -40,6 +41,10 @@ func (c *Classifier) Posterior(document string) map[string]float64 {
 	predictions := make(map[string]float64)
 
 	for class, classcolumn := range c.Matrix.Classes {
+		if len(classcolumn.Data) < minClassSize {
+			continue
+		}
+
 		n := classcolumn.Count()
 		smoothN := n + (smoother * 2)
 
@@ -59,7 +64,7 @@ func (c *Classifier) Posterior(document string) map[string]float64 {
 				loglikelihood[0] += math.Log(conditional)
 
 				// conditional probability the token occurs if the class doesn't apply
-				not := notintersection(tokencolumn.Data, classcolumn.Data)
+				not := len(tokencolumn.Data) - joint
 				notconditional := float64(not+smoother) / float64(smoothN) // P(F|C=N)
 				loglikelihood[1] += math.Log(notconditional)
 			}
@@ -106,26 +111,6 @@ func intersection(array1, array2 []int) int {
 				count++
 				break
 			}
-		}
-	}
-	return count
-}
-
-// given it's not an element of array2, the count of array1
-func notintersection(array1, array2 []int) int {
-	var count int
-
-	for _, elem1 := range array1 {
-		isElement := false
-		for _, elem2 := range array2 {
-			if elem1 == elem2 {
-				isElement = true
-				break
-			}
-		}
-
-		if !isElement {
-			count++
 		}
 	}
 	return count
