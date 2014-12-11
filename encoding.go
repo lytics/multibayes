@@ -37,3 +37,20 @@ func NewClassifierFromJSON(buf []byte) (*Classifier, error) {
 
 	return classifier, nil
 }
+
+func (s *sparseColumn) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.Data)
+}
+
+func (s *sparseColumn) UnmarshalJSON(buf []byte) error {
+	var data []int
+
+	err := json.Unmarshal(buf, &data)
+	if err != nil {
+		return err
+	}
+
+	s.Data = data
+
+	return nil
+}

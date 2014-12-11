@@ -6,6 +6,8 @@ import (
 )
 
 func TestPosterior(t *testing.T) {
+	minClassSize = 0
+
 	classifier := NewClassifier()
 	classifier.trainWithTestData()
 

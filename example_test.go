@@ -32,7 +32,7 @@ func Example() {
 
 	// predict new classes
 	probs := classifier.Posterior("Aaron's dog has fleas.")
-	fmt.Printf("Posterior Probabilities: %+v\n", probs)
+	fmt.Printf("Posterior Probabilities: vet: %.4f, cdc: %.4f\n", probs["vet"], probs["cdc"])
 
-	// Output: Posterior Probabilities: map[vet:0.8571428571428571 cdc:0.27272727272727276]
+	// Output: Posterior Probabilities: vet: 0.8571, cdc: 0.2727
 }
