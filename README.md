@@ -1,6 +1,8 @@
 Multibayes
 ==========
 
+[![Build Status](https://travis-ci.org/lytics/multibayes.svg?branch=master)](https://travis-ci.org/lytics/multibayes) [![GoDoc](https://godoc.org/github.com/lytics/multibayes?status.svg)](https://godoc.org/github.com/lytics/multibayes)
+
 Multiclass naive Bayesian document classification.
 
 Often in document classification, a document may have more than one relevant classification -- a question on [stackoverflow](http://stackoverflow.com) might have tags "go", "map", and "interface".
