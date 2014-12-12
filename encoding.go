@@ -2,6 +2,7 @@ package multibayes
 
 import (
 	"encoding/json"
+	"io/ioutil"
 )
 
 type jsonableClassifier struct {
@@ -36,6 +37,15 @@ func NewClassifierFromJSON(buf []byte) (*Classifier, error) {
 	}
 
 	return classifier, nil
+}
+
+func LoadClassifierFromFile(filename string) (*Classifier, error) {
+	buf, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClassifierFromJSON(buf)
 }
 
 func (s *sparseColumn) MarshalJSON() ([]byte, error) {
