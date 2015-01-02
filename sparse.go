@@ -54,13 +54,19 @@ func (s *sparseMatrix) Add(ngrams []ngram, classes []string) {
 		s.Classes[class].Add(s.N)
 	}
 
+	// add ngrams uniquely
+	added := make(map[string]int)
 	for _, ngram := range ngrams {
 		gramString := ngram.String()
 		if _, ok := s.Tokens[gramString]; !ok {
 			s.Tokens[gramString] = newSparseColumn()
 		}
 
-		s.Tokens[gramString].Add(s.N)
+		// only add the document index once for the ngram
+		if _, ok := added[gramString]; !ok {
+			added[gramString] = 1
+			s.Tokens[gramString].Add(s.N)
+		}
 	}
 	// increment the row counter
 	s.N++
