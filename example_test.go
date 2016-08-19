@@ -24,6 +24,7 @@ func Example() {
 	}
 
 	classifier := NewClassifier()
+	classifier.MinClassSize = 0
 
 	// train the classifier
 	for _, document := range documents {

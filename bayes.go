@@ -6,12 +6,13 @@ import (
 
 var (
 	smoother     = 1 // laplace
-	minClassSize = 5
+	defaultMinClassSize = 5
 )
 
 type Classifier struct {
 	Tokenizer *tokenizer    `json:"-"`
 	Matrix    *sparseMatrix `json:"matrix"`
+	MinClassSize int
 }
 
 // Create a new multibayes classifier.
@@ -25,6 +26,7 @@ func NewClassifier() *Classifier {
 	return &Classifier{
 		Tokenizer: tokenize,
 		Matrix:    sparse,
+		MinClassSize: defaultMinClassSize,
 	}
 }
 
@@ -41,7 +43,7 @@ func (c *Classifier) Posterior(document string) map[string]float64 {
 	predictions := make(map[string]float64)
 
 	for class, classcolumn := range c.Matrix.Classes {
-		if len(classcolumn.Data) < minClassSize {
+		if len(classcolumn.Data) < c.MinClassSize {
 			continue
 		}
 
