@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/blevesearch/bleve/analysis"
-	"github.com/blevesearch/bleve/analysis/tokenizers/regexp_tokenizer"
+	regexp_tokenizer "github.com/blevesearch/bleve/analysis/tokenizer/regexp"
 	"github.com/blevesearch/go-porterstemmer"
 )
 
